@@ -29,17 +29,7 @@ fahrenheit_val = 99
 celsius_val = ((fahrenheit_val - 32) * (5/9))
 ```
 
-and for a second number we could just copy the line and rename the variables
-
-```python
-fahrenheit_val = 99
-celsius_val = ((fahrenheit_val - 32) * (5/9))
-
-fahrenheit_val2 = 43
-celsius_val2 = ((fahrenheit_val2 - 32) * (5/9))
-```
-
-But we would be in trouble as soon as we had to do this more than a couple times.
+We could change the value of fahrenheit_val and re-run the code over, but we would be in trouble as soon as we had to do this more than a couple times.
 Cutting and pasting it is going to make our code get very long and very repetitive,
 very quickly.
 We'd like a way to package our code so that it is easier to reuse,
@@ -48,17 +38,8 @@ Let's start by defining a function `fahr_to_celsius` that converts temperatures
 from Fahrenheit to Celsius:
 
 ```python
-def explicit_fahr_to_celsius(temp):
-    # Assign the converted value to a variable
-    converted = ((temp - 32) * (5/9))
-    # Return the value of the new variable
-    return converted
     
 def fahr_to_celsius(temp):
-    # Return converted value more efficiently using the return
-    # function without creating a new variable. This code does
-    # the same thing as the previous function but it is more explicit
-    # in explaining how the return command works.
     return ((temp - 32) * (5/9))
 ```
 
@@ -134,6 +115,7 @@ print('boiling point of water in Kelvin:', fahr_to_kelvin(212.0))
 ```output
 boiling point of water in Kelvin: 373.15
 ```
+Note that in this case we're creating new variables inside of the function, and choosing to return one of them. 
 
 This is our first taste of how larger programs are built:
 we define basic operations,
@@ -141,6 +123,7 @@ then combine them in ever-larger chunks to get the effect we want.
 Real-life functions will usually be larger than the ones shown here --- typically half a dozen
 to a few dozen lines --- but they shouldn't ever be much longer than that,
 or the next person who reads it won't be able to understand what's going on.
+
 
 ## Variable Scope
 
@@ -196,6 +179,91 @@ temperature in Fahrenheit was: 212.0
 temperature in Kelvin was: 373.15
 ```
 
+You can also return more than one value in your function's return statement:
+```python
+def fahr_to_kelvin(temp_f):
+    temp_c = fahr_to_celsius(temp_f)
+    temp_k = celsius_to_kelvin(temp_c)
+    return temp_c, temp_k
+
+temp_c, temp_k = fahr_to_kelvin(212.0)
+print(temp_c, temp_k)
+```
+
+```output
+100.0 373.15
+```
+:::::::::::::::::::::::::::::::::::::::  challenge
+
+## Combining Strings
+
+"Adding" two strings produces their concatenation:
+`'a' + 'b'` is `'ab'`.
+Write a function called `fence` that takes two parameters called `original` and `wrapper`
+and returns a new string that has the wrapper character at the beginning and end of the original.
+A call to your function should look like this:
+
+```python
+print(fence('name', '*'))
+```
+
+```output
+*name*
+```
+
+:::::::::::::::  solution
+
+## Solution
+
+```python
+def fence(original, wrapper):
+    return wrapper + original + wrapper
+```
+
+:::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::::
+
+:::::::::::::::::::::::::::::::::::::::  challenge
+
+## Return versus print
+
+Note that `return` and `print` are not interchangeable.
+`print` is a Python function that *prints* data to the screen.
+It enables us, *users*, see the data.
+`return` statement, on the other hand, makes data visible to the program.
+Let's have a look at the following function:
+
+```python
+def add(a, b):
+    print(a + b)
+```
+
+**Question**: What will we see if we execute the following commands?
+
+```python
+A = add(7, 3)
+print(A)
+```
+
+:::::::::::::::  solution
+
+## Solution
+
+Python will first execute the function `add` with `a = 7` and `b = 3`,
+and, therefore, print `10`. However, because function `add` does not have a
+line that starts with `return` (no `return` "statement"), it will, by default, return
+nothing which, in Python world, is called `None`. Therefore, `A` will be assigned to `None`
+and the last line (`print(A)`) will print `None`. As a result, we will see:
+
+```output
+10
+None
+```
+
+:::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::::
 ## Tidying up
 
 Now that we know how to wrap bits of code up in functions,
@@ -203,11 +271,14 @@ we can make our inflammation analysis easier to read and easier to reuse.
 First, let's make a `visualize` function that generates our plots:
 
 ```python
+import matplotlib.pyplot as plt
+import numpy
+
 def visualize(filename):
 
     data = numpy.loadtxt(fname=filename, delimiter=',')
 
-    fig = matplotlib.pyplot.figure(figsize=(10.0, 3.0))
+    fig = plt.figure(figsize=(10.0, 3.0))
 
     axes1 = fig.add_subplot(1, 3, 1)
     axes2 = fig.add_subplot(1, 3, 2)
@@ -223,7 +294,7 @@ def visualize(filename):
     axes3.plot(numpy.amin(data, axis=0))
 
     fig.tight_layout()
-    matplotlib.pyplot.show()
+    plt.show()
 ```
 
 and another function called `detect_problems` that checks for those systematics
@@ -252,6 +323,7 @@ we can now read and reuse both ideas separately.
 We can reproduce the previous analysis with a much simpler `for` loop:
 
 ```python
+import glob
 filenames = sorted(glob.glob('inflammation*.csv'))
 
 for filename in filenames[:3]:
@@ -265,137 +337,32 @@ we can more easily read and understand what is happening in the `for` loop.
 Even better, if at some later date we want to use either of those pieces of code again,
 we can do so in a single line.
 
-## Testing and Documenting
+## Documenting
 
-Once we start putting things in functions so that we can re-use them,
-we need to start testing that those functions are working correctly.
-To see how to do this,
-let's write a function to offset a dataset so that it's mean value
-shifts to a user-defined value:
-
-```python
-def offset_mean(data, target_mean_value):
-    return (data - numpy.mean(data)) + target_mean_value
-```
-
-We could test this on our actual data,
-but since we don't know what the values ought to be,
-it will be hard to tell if the result was correct.
-Instead,
-let's use NumPy to create a matrix of 0's
-and then offset its values to have a mean value of 3:
-
-```python
-z = numpy.zeros((2, 2))
-print(offset_mean(z, 3))
-```
-
-```output
-[[ 3.  3.]
- [ 3.  3.]]
-```
-
-That looks right,
-so let's try `offset_mean` on our real data:
-
-```python
-data = numpy.loadtxt(fname='inflammation-01.csv', delimiter=',')
-print(offset_mean(data, 0))
-```
-
-```output
-[[-6.14875 -6.14875 -5.14875 ... -3.14875 -6.14875 -6.14875]
- [-6.14875 -5.14875 -4.14875 ... -5.14875 -6.14875 -5.14875]
- [-6.14875 -5.14875 -5.14875 ... -4.14875 -5.14875 -5.14875]
- ...
- [-6.14875 -5.14875 -5.14875 ... -5.14875 -5.14875 -5.14875]
- [-6.14875 -6.14875 -6.14875 ... -6.14875 -4.14875 -6.14875]
- [-6.14875 -6.14875 -5.14875 ... -5.14875 -5.14875 -6.14875]]
-```
-
-It's hard to tell from the default output whether the result is correct,
-but there are a few tests that we can run to reassure us:
-
-```python
-print('original min, mean, and max are:', numpy.amin(data), numpy.mean(data), numpy.amax(data))
-offset_data = offset_mean(data, 0)
-print('min, mean, and max of offset data are:',
-      numpy.amin(offset_data),
-      numpy.mean(offset_data),
-      numpy.amax(offset_data))
-```
-
-```output
-original min, mean, and max are: 0.0 6.14875 20.0
-min, mean, and max of offset data are: -6.14875 2.842170943040401e-16 13.85125
-```
-
-That seems almost right:
-the original mean was about 6.1,
-so the lower bound from zero is now about -6.1.
-The mean of the offset data isn't quite zero, but it's pretty close.
-We can even go further and check that the standard deviation hasn't changed:
-
-```python
-print('std dev before and after:', numpy.std(data), numpy.std(offset_data))
-```
-
-```output
-std dev before and after: 4.613833197118566 4.613833197118566
-```
-
-Those values look the same,
-but we probably wouldn't notice if they were different in the sixth decimal place.
-Let's do this instead:
-
-```python
-print('difference in standard deviations before and after:',
-      numpy.std(data) - numpy.std(offset_data))
-```
-
-```output
-difference in standard deviations before and after: 0.0
-```
-
-Everything looks good,
-and we should probably get back to doing our analysis.
-We have one more task first, though:
 we should write some [documentation](../learners/reference.md#documentation) for our function
 to remind ourselves later what it's for and how to use it.
 
 The usual way to put documentation in software is
-to add [comments](../learners/reference.md#comment) like this:
+to add [comments](../learners/reference.md#comment) is usingthe #.
 
-```python
-# offset_mean(data, target_mean_value):
-# return a new array containing the original data with its mean offset to match the desired value.
-def offset_mean(data, target_mean_value):
-    return (data - numpy.mean(data)) + target_mean_value
-```
 
 There's a better way, though.
 If the first thing in a function is a string that isn't assigned to a variable,
 that string is attached to the function as its documentation:
 
 ```python
-def offset_mean(data, target_mean_value):
-    """Return a new array containing the original data
-       with its mean offset to match the desired value."""
-    return (data - numpy.mean(data)) + target_mean_value
+def visualize(filename):
+    """Generate three subplots with average, 
+    max, and min values from inflammation 
+    CSV files."""
+    
 ```
 
 This is better because we can now ask Python's built-in help system to show us
 the documentation for the function:
 
 ```python
-help(offset_mean)
-```
-
-```output
-Help on function offset_mean in module __main__:
-
-offset_mean(data, target_mean_value)
-    Return a new array containing the original data with its mean offset to match the desired value.
+help(visualize)
 ```
 
 A string like this is called a [docstring](../learners/reference.md#docstring).
@@ -403,33 +370,6 @@ We don't need to use triple quotes when we write one,
 but if we do,
 we can break the string across multiple lines:
 
-```python
-def offset_mean(data, target_mean_value):
-    """Return a new array containing the original data
-       with its mean offset to match the desired value.
-
-    Examples
-    --------
-    >>> offset_mean([1, 2, 3], 0)
-    array([-1.,  0.,  1.])
-    """
-    return (data - numpy.mean(data)) + target_mean_value
-
-help(offset_mean)
-```
-
-```output
-Help on function offset_mean in module __main__:
-
-offset_mean(data, target_mean_value)
-    Return a new array containing the original data
-       with its mean offset to match the desired value.
-
-    Examples
-    --------
-    >>> offset_mean([1, 2, 3], 0)
-    array([-1.,  0.,  1.])
-```
 
 ## Defining Defaults
 
@@ -475,57 +415,19 @@ SyntaxError: unexpected EOF while parsing
 ```
 
 To understand what's going on,
-and make our own functions easier to use,
-let's re-define our `offset_mean` function like this:
+and make one our own functions easier to use,
+let's re-define our `fahr_to_kelvin` function to use a default f value:
 
 ```python
-def offset_mean(data, target_mean_value=0.0):
-    """Return a new array containing the original data
-       with its mean offset to match the desired value, (0 by default).
-
-    Examples
-    --------
-    >>> offset_mean([1, 2, 3])
-    array([-1.,  0.,  1.])
-    """
-    return (data - numpy.mean(data)) + target_mean_value
+def fahr_to_kelvin(temp_f=32):
+    temp_c = fahr_to_celsius(temp_f)
+    temp_k = celsius_to_kelvin(temp_c)
+    return temp_c, temp_k
+fahr_to_kelvin()
 ```
 
-The key change is that the second parameter is now written `target_mean_value=0.0`
-instead of just `target_mean_value`.
-If we call the function with two arguments,
-it works as it did before:
-
-```python
-test_data = numpy.zeros((2, 2))
-print(offset_mean(test_data, 3))
-```
-
-```output
-[[ 3.  3.]
- [ 3.  3.]]
-```
-
-But we can also now call it with just one parameter,
-in which case `target_mean_value` is automatically assigned
-the [default value](../learners/reference.md#default-value) of 0.0:
-
-```python
-more_data = 5 + numpy.zeros((2, 2))
-print('data before mean offset:')
-print(more_data)
-print('offset data:')
-print(offset_mean(more_data))
-```
-
-```output
-data before mean offset:
-[[ 5.  5.]
- [ 5.  5.]]
-offset data:
-[[ 0.  0.]
- [ 0.  0.]]
-```
+The key change is that the second parameter is now written `temp_f=32`
+instead of just `temp_f`.
 
 This is handy:
 if we usually want a function to work one way,
@@ -660,240 +562,6 @@ programmer. If you need to revisit code that you wrote months ago and
 haven't thought about since then, you will appreciate the value of
 readable code!
 
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Combining Strings
-
-"Adding" two strings produces their concatenation:
-`'a' + 'b'` is `'ab'`.
-Write a function called `fence` that takes two parameters called `original` and `wrapper`
-and returns a new string that has the wrapper character at the beginning and end of the original.
-A call to your function should look like this:
-
-```python
-print(fence('name', '*'))
-```
-
-```output
-*name*
-```
-
-:::::::::::::::  solution
-
-## Solution
-
-```python
-def fence(original, wrapper):
-    return wrapper + original + wrapper
-```
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
-
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Return versus print
-
-Note that `return` and `print` are not interchangeable.
-`print` is a Python function that *prints* data to the screen.
-It enables us, *users*, see the data.
-`return` statement, on the other hand, makes data visible to the program.
-Let's have a look at the following function:
-
-```python
-def add(a, b):
-    print(a + b)
-```
-
-**Question**: What will we see if we execute the following commands?
-
-```python
-A = add(7, 3)
-print(A)
-```
-
-:::::::::::::::  solution
-
-## Solution
-
-Python will first execute the function `add` with `a = 7` and `b = 3`,
-and, therefore, print `10`. However, because function `add` does not have a
-line that starts with `return` (no `return` "statement"), it will, by default, return
-nothing which, in Python world, is called `None`. Therefore, `A` will be assigned to `None`
-and the last line (`print(A)`) will print `None`. As a result, we will see:
-
-```output
-10
-None
-```
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
-
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Selecting Characters From Strings
-
-If the variable `s` refers to a string,
-then `s[0]` is the string's first character
-and `s[-1]` is its last.
-Write a function called `outer`
-that returns a string made up of just the first and last characters of its input.
-A call to your function should look like this:
-
-```python
-print(outer('helium'))
-```
-
-```output
-hm
-```
-
-:::::::::::::::  solution
-
-## Solution
-
-```python
-def outer(input_string):
-    return input_string[0] + input_string[-1]
-```
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
-
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Rescaling an Array
-
-Write a function `rescale` that takes an array as input
-and returns a corresponding array of values scaled to lie in the range 0.0 to 1.0.
-(Hint: If `L` and `H` are the lowest and highest values in the original array,
-then the replacement for a value `v` should be `(v-L) / (H-L)`.)
-
-:::::::::::::::  solution
-
-## Solution
-
-```python
-def rescale(input_array):
-    L = numpy.amin(input_array)
-    H = numpy.amax(input_array)
-    output_array = (input_array - L) / (H - L)
-    return output_array
-```
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
-
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Testing and Documenting Your Function
-
-Run the commands `help(numpy.arange)` and `help(numpy.linspace)`
-to see how to use these functions to generate regularly-spaced values,
-then use those values to test your `rescale` function.
-Once you've successfully tested your function,
-add a docstring that explains what it does.
-
-:::::::::::::::  solution
-
-## Solution
-
-```python
-"""Takes an array as input, and returns a corresponding array scaled so
-that 0 corresponds to the minimum and 1 to the maximum value of the input array.
-
-Examples:
->>> rescale(numpy.arange(10.0))
-array([ 0.        ,  0.11111111,  0.22222222,  0.33333333,  0.44444444,
-       0.55555556,  0.66666667,  0.77777778,  0.88888889,  1.        ])
->>> rescale(numpy.linspace(0, 100, 5))
-array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-"""
-```
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
-
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Defining Defaults
-
-Rewrite the `rescale` function so that it scales data to lie between `0.0` and `1.0` by default,
-but will allow the caller to specify lower and upper bounds if they want.
-Compare your implementation to your neighbor's:
-do the two functions always behave the same way?
-
-:::::::::::::::  solution
-
-## Solution
-
-```python
-def rescale(input_array, low_val=0.0, high_val=1.0):
-    """rescales input array values to lie between low_val and high_val"""
-    L = numpy.amin(input_array)
-    H = numpy.amax(input_array)
-    intermed_array = (input_array - L) / (H - L)
-    output_array = intermed_array * (high_val - low_val) + low_val
-    return output_array
-```
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
-
-:::::::::::::::::::::::::::::::::::::::  challenge
-
-## Variables Inside and Outside Functions
-
-What does the following piece of code display when run --- and why?
-
-```python
-f = 0
-k = 0
-
-def f2k(f):
-    k = ((f - 32) * (5.0 / 9.0)) + 273.15
-    return k
-
-print(f2k(8))
-print(f2k(41))
-print(f2k(32))
-
-print(k)
-```
-
-:::::::::::::::  solution
-
-## Solution
-
-```output
-259.81666666666666
-278.15
-273.15
-0
-```
-
-`k` is 0 because the `k` inside the function `f2k` doesn't know
-about the `k` defined outside the function. When the `f2k` function is called,
-it creates a [local variable](../learners/reference.md#local-variable)
-`k`. The function does not return any values
-and does not alter `k` outside of its local copy.
-Therefore the original value of `k` remains unchanged.
-Beware that a local `k` is created because `f2k` internal statements
-*affect* a new value to it. If `k` was only `read`, it would simply retrieve the
-global `k` value.
-
-
-
-:::::::::::::::::::::::::
-
-::::::::::::::::::::::::::::::::::::::::::::::::::
 
 :::::::::::::::::::::::::::::::::::::::  challenge
 
